@@ -19,6 +19,7 @@
 """
 
 import abc
+import warnings
 
 from pyalgotrade import warninghelpers
 
@@ -128,17 +129,27 @@ class BasicBar(Bar):
         '__useAdjustedValue'
     )
 
-    def __init__(self, dateTime, open_, high, low, close, volume, adjClose, frequency):
-        if high < low:
-            raise Exception("high < low on %s" % (dateTime))
-        elif high < open_:
-            raise Exception("high < open on %s" % (dateTime))
-        elif high < close:
-            raise Exception("high < close on %s" % (dateTime))
-        elif low > open_:
-            raise Exception("low > open on %s" % (dateTime))
-        elif low > close:
-            raise Exception("low > close on %s" % (dateTime))
+    def __init__(self, dateTime, open_, high, low, close, volume, adjClose, frequency, chkvals=False):
+        if(chkvals):
+            if high < low:
+                raise Exception("high < low on %s" % (dateTime))
+            elif high < open_:
+                raise Exception("high < open on %s" % (dateTime))
+            elif high < close:
+                raise Exception("high < close on %s" % (dateTime))
+            elif low > open_:
+                raise Exception("low > open on %s" % (dateTime))
+            elif low > close:
+                raise Exception("low > close on %s" % (dateTime))
+        else:
+            if high < max(close, open_):
+                warnings.warn("high < close or open on %s" % (dateTime))
+                high = max(close, open_)
+            if low > min(close,open_):
+                warnings.warn("low > close or open on %s" % (dateTime))
+                low = min(close,open_)
+            if high < low:
+                raise Exception("high < low on %s" % (dateTime))
 
         self.__dateTime = dateTime
         self.__open = open_
