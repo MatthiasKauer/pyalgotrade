@@ -2,22 +2,33 @@ language: python
 python:
   - "2.7"
 
+virtualenv:
+    system_site_packages: true
+
 before_install:
   - sudo apt-get install gfortran libopenblas-dev liblapack-dev
+  - sudo pip install numpy
+  - sudo apt-get install python-scipy
+  # statsmodels dependencies
+  - sudo pip install pandas
+  - sudo pip install patsy
+  # TA-Lib dependencies
+  - ./travis/install_talib_deps.sh
+  # Code coverage reports
+  - sudo pip install coveralls
+  # PyAlgoTrade dependencies
+  - sudo pip install --allow-external=TA-Lib --allow-unverified=TA-Lib -r travis/requirements.txt
 
-# command to install dependencies
-# pip install scipy takes a lot of time and generates a lot of output. I want to get some output printed
-# just to avoid the job from getting stopped.
-# 
-# Check https://github.com/statsmodels/statsmodels/issues/2184 for scipy==0.14
 install:
-  - pip install scipy==0.14 | awk 'NR % 250 == 0'
   - pip list
   - pip install .
-  - pip install --allow-external=TA-Lib --allow-unverified=TA-Lib -r travis/requirements.txt
 
 # command to run tests
 # optimizer_testcase is ignored because it gets blocked in Travis.
 # twitter_test is ignored because it requires credentials.
-# talib_test is ignored until I get it to work on Travis.
-script: nosetests --ignore-files=optimizer_testcase --ignore-files=twitter_test --ignore-files=talib_test
+script:
+  - export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+  - nosetests --ignore-files=optimizer_testcase --ignore-files=twitter_test --with-coverage --cover-package=pyalgotrade
+
+after_success:
+  - coveralls
